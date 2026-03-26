@@ -3,111 +3,88 @@
 {% block title %}CareerNavi Pro — Results{% endblock %}
 
 {% block content %}
-  <div class="navbar">
-    <div class="nav-inner">
-      <a class="brand" href="{{ url_for('home') }}">
-        <div class="logo"><span>J</span></div>
-        <div>CareerNavi <span style="color:var(--primary)">Pro</span></div>
-      </a>
-      <div class="nav-links">
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('companies') }}">Companies</a>
-        <a href="{{ url_for('analysis') }}">Insights</a>
+<div class="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="{{ url_for('home') }}">
+      <div class="logo"><span>J</span></div>
+      <div>CareerNavi <span style="color:var(--primary)">Pro</span></div>
+    </a>
+    <div class="nav-links">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('companies') }}">Companies</a>
+      <a href="{{ url_for('analysis') }}">Insights</a>
+
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('logout') }}">Logout</a>
+      {% else %}
         <a href="{{ url_for('login') }}">Login</a>
-      </div>
+      {% endif %}
     </div>
   </div>
+</div>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="toast {{ 'danger' if category=='danger' else ('success' if category=='success' else 'info') }}">
-          <div class="t">{{ category|upper }}</div>
-          <div>{{ message }}</div>
-        </div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
-
-  <div class="container">
-    <div class="card card-pad">
-      <h2 style="margin:0 0 6px 0">Recommended Jobs</h2>
-      <div class="h-sub">Based on your skills: <b style="color:#cfe0ff">{{ skills }}</b></div>
-      <div class="btn-row">
-        <a class="btn ghost" href="{{ url_for('dashboard') }}">New Search</a>
-        <a class="btn ghost" href="{{ url_for('companies') }}">Companies</a>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="toast {{ category }}">
+        {{ message }}
       </div>
-    </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
 
-    <div class="job-cards-container">
-      {% for job in results %}
-      <div class="job-card">
-        
-        <!-- Job Header -->
-        <div class="job-header">
-          <h3 class="job-title">{{ job.title }}</h3>
-          <p class="job-company">{{ job.company }}</p>
-          <div class="job-meta">
-            <span class="job-meta-item">{{ job.location }}</span>
-            <span class="job-meta-item">{{ job.job_type }}</span>
-          </div>
-        </div>
+<div class="container">
 
-        <!-- Match Percentage Indicator -->
-        {% set percentage = (job.score * 100) | round | int %}
-        <div class="match-indicator" title="{{ percentage }}% Match">
-          <div class="match-percentage">{{ percentage }}%</div>
-          <div class="match-label">Match</div>
-        </div>
+  <div class="card card-pad">
+    <h2>Recommended Jobs</h2>
+    <p>Based on your skills: <b>{{ skills }}</b></p>
+    <a class="btn ghost" href="{{ url_for('dashboard') }}">New Search</a>
+  </div>
 
-        <!-- Job Description -->
-        {% if job.get('description') %}
-        <p class="job-description">{{ job.description[:120] }}{% if job.description|length > 120 %}...{% endif %}</p>
-        {% endif %}
+  <div class="job-cards-container">
+    {% for job in results %}
+    <div class="job-card">
 
-        <!-- Tech Stack Pills -->
-        {% set tech_skills = job.get('skills', job.get('required_skills', '')) %}
-        {% if tech_skills %}
-        <div class="tech-stack">
-          {% for skill in tech_skills.split(',') %}
-            {% if skill.strip() %}
-            <span class="tech-pill">{{ skill.strip() }}</span>
-            {% endif %}
-          {% endfor %}
-        </div>
-        {% endif %}
+      <div class="job-header">
+        <h3>{{ job.title }}</h3>
+        <p>{{ job.company }}</p>
+        <span>{{ job.location }}</span>
+      </div>
 
-        <!-- Metadata & Salary -->
-        <div class="job-meta-info">
-          {% if job.get('level') %}<span class="meta-badge">{{ job.level }}</span>{% endif %}
-          {% if job.get('salary') %}<span class="meta-badge salary">₹ {{ job.salary }}</span>{% endif %}
-        </div>
+      {% if job.description %}
+      <p>{{ job.description[:150] }}...</p>
+      {% endif %}
 
-        <!-- Why This Job -->
-        {% if job.get('why') %}
-        <div class="job-reasoning">💡 {{ job.why }}</div>
-        {% endif %}
+      <div class="job-actions">
 
-        <!-- Job Actions -->
-        <div class="job-actions">
-          {% if 'user_id' in session %}
-            {% if job.apply_link %}
-            <a class="action-btn primary" href="{{ job.apply_link }}" target="_blank">Apply Now</a>
-            {% else %}
-            <button class="action-btn primary" type="button" disabled style="opacity: 0.6; cursor: not-allowed;">Apply</button>
-            {% endif %}
+        {% if current_user.is_authenticated %}
+
+          {% if job.apply_link %}
+          <form method="POST" action="{{ url_for('apply_job') }}">
+            <input type="hidden" name="job_title" value="{{ job.title }}">
+            <input type="hidden" name="company" value="{{ job.company }}">
+            <input type="hidden" name="apply_link" value="{{ job.apply_link }}">
+            <button type="submit" class="action-btn primary">
+              Apply Now
+            </button>
+          </form>
           {% else %}
-            <a class="action-btn primary" href="{{ url_for('login_to_apply') }}">Apply Now</a>
+          <button class="action-btn primary" disabled>
+            Apply Unavailable
+          </button>
           {% endif %}
-          <a class="action-btn secondary" href="{{ url_for('analysis') }}">View Insights</a>
-        </div>
+
+        {% else %}
+          <a class="action-btn primary" href="{{ url_for('login') }}">
+            Login to Apply
+          </a>
+        {% endif %}
 
       </div>
-      {% endfor %}
+
     </div>
+    {% endfor %}
   </div>
 
-  <div class="footer">
-    © 2026 CareerNavi Pro • Premium Flask Recommender • Made for Academic/Project use
-  </div>
+</div>
 {% endblock %}

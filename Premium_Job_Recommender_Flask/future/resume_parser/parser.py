@@ -1,6 +1,14 @@
-# Future module: Resume parsing
-# Supports PDF/DOCX
+# future/resume_parser/parser.py
 
-def parse_resume(file_path: str) -> dict:
-    # TODO: implement extraction + NLP
-    return {"skills": [], "education": [], "experience": []}
+import pdfplumber
+
+def parse_pdf(file_stream):
+    raw_text = []
+
+    with pdfplumber.open(file_stream) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                raw_text.append(text)
+
+    return "\n".join(raw_text)
