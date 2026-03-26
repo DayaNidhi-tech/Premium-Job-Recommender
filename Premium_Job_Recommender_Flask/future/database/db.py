@@ -1,5 +1,10 @@
-# Future module: Database setup (SQLite)
-# TODO: integrate SQLAlchemy models
+from pymongo import MongoClient
 
-def init_db():
-    pass
+# Connect to local MongoDB
+client = MongoClient("mongodb://localhost:27017")
+
+# Create / use database
+db = client["jobpilot_pro"]
+
+# Collections
+applications_col = db["applications"]
